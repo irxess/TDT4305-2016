@@ -1,10 +1,11 @@
 /**
   * Created by CVi on 01.04.2016.
   */
-class AbrevCheckIn(ci: CheckIn) extends java.io.Serializable {
+class AbrevCheckIn(ci: CheckIn) extends java.io.Serializable with Comparable {
   def time = ci.time
   def lat = ci.time
   def lon = ci.time
+  def sid = ci.sid
 
   def haversine(lat1:Double, lon1:Double, lat2:Double, lon2:Double)={
     val R = 6372.8

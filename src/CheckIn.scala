@@ -14,9 +14,12 @@ class CheckIn(line: String, cities: Array[City]) extends java.io.Serializable {
   def offset = data(4)
   def lat = data(5).toFloat
   def lon = data(6).toFloat
-  def cat = data(7)
-  def subCat = data(8)
-  def city = closestCity(cities, lon, lat)
+  //def cat = data(7)
+  //def subCat = data(8)
+  val city = closestCity(cities, lon, lat)
+  def city_name = city.name
+  //def country = city.country
+  def country_code = city.country_code
 
   override def toString(): String = "(" + id + ", " + sid + ", " + city + ")"
 
