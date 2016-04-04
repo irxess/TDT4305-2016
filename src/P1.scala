@@ -20,7 +20,7 @@ object P1 {
     var cities = sc.textFile(cities_file, 2).map(line => new City(line)).collect()
 
     val data = allOfIt.filter(_ != header).map(line => new CheckIn(line, cities)).cache()//.persist(StorageLevel.MEMORY_AND_DISK)
-    cities = new Array[City](0)
+    //cities = new Array[City](0)
 
     val dataArray = data.map(ci => (ci.sid, {
       val al = new util.ArrayList[AbrevCheckIn]()

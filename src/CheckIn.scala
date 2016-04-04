@@ -9,20 +9,19 @@ import org.apache.spark.rdd.RDD
   */
 @SerialVersionUID(100L)
 class CheckIn(line: String, cities: Array[City]) extends java.io.Serializable {
-  val data = line.split("\t")
-  //checkin_id	user_id	session_id	utc_time	timezone_offset	lat	lon	category	subcategory
-  def id = data(0)
-  def uid = data(1).toInt
-  def sid = data(2)
-  def time = getLocalTime(data(3), data(4).toInt)
-  def lat = data(5).toFloat
-  def lon = data(6).toFloat
+  private val data = line.split("\t")
+  val id = data(0)
+  val uid = data(1).toInt
+  val sid = data(2)
+  val time = getLocalTime(data(3), data(4).toInt)
+  val lat = data(5).toDouble
+  val lon = data(6).toDouble
   //def cat = data(7)
   //def subCat = data(8)
-  val city = closestCity(cities, lon, lat)
-  def city_name = city.name
+  private val city = closestCity(cities, lon, lat)
+  val city_name = city.name
   //def country = city.country
-  def country_code = city.country_code
+  val country_code = city.country_code
 
   override def toString(): String = "(" + id + ", " + sid + ", " + city + ")"
 
@@ -43,13 +42,13 @@ class CheckIn(line: String, cities: Array[City]) extends java.io.Serializable {
     utcTime.plusMinutes( localOffset )
   }
 
-  def distance_between(lat_1: Float, lon_1: Float, lat_2: Float, lon_2: Float): Float ={
-    haversine(lat_1, lon_1, lat_2, lon_2).toFloat
+  def distance_between(lat_1: Double, lon_1: Double, lat_2: Double, lon_2: Double): Double ={
+    haversine(lat_1, lon_1, lat_2, lon_2)
   }
 
-  def closestCity(cities: Array[City], lon: Float, lat: Float): City ={
-    var current = new City("N/A\t0.0\t0.0\t\t")
-    var distance = Float.PositiveInfinity
+  def closestCity(cities: Array[City], lon: Double, lat: Double): City ={
+    var current = new City("N/A\t0.0\t0.0\tNA\tNA")
+    var distance = Double.PositiveInfinity
     for(i <- cities.indices){
       if(distance_between(cities(i).lat, cities(i).lon, lat, lon) < distance){
         distance = distance_between(cities(i).lat, cities(i).lon, lat, lon)
