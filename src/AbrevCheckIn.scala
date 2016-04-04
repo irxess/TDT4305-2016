@@ -1,7 +1,7 @@
 /**
   * Created by CVi on 01.04.2016.
   */
-class AbrevCheckIn(ci: CheckIn) extends java.io.Serializable with Comparable {
+class AbrevCheckIn(ci: CheckIn) extends java.io.Serializable with Comparable[AbrevCheckIn] {
   def time = ci.time
   def lat = ci.time
   def lon = ci.time
@@ -19,5 +19,9 @@ class AbrevCheckIn(ci: CheckIn) extends java.io.Serializable with Comparable {
 
   def distance_between(lat_1: Float, lon_1: Float, lat_2: Float, lon_2: Float): Float ={
     haversine(lat_1, lon_1, lat_2, lon_2).toFloat
+  }
+
+  override def compareTo(o: AbrevCheckIn): Int = {
+    time.compareTo(o.time)
   }
 }

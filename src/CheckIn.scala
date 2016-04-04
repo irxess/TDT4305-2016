@@ -1,3 +1,7 @@
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
 import org.apache.spark.rdd.RDD
 
 /**
@@ -10,8 +14,7 @@ class CheckIn(line: String, cities: Array[City]) extends java.io.Serializable {
   def id = data(0)
   def uid = data(1).toInt
   def sid = data(2)
-  def time = data(3)
-  def offset = data(4).toInt
+  def time = getLocalTime(data(3), data(4).toInt)
   def lat = data(5).toFloat
   def lon = data(6).toFloat
   //def cat = data(7)
@@ -32,6 +35,12 @@ class CheckIn(line: String, cities: Array[City]) extends java.io.Serializable {
     val a = Math.pow(Math.sin(dLat/2),2) + Math.pow(Math.sin(dLon/2),2) * Math.cos(lat1.toRadians) * Math.cos(lat2.toRadians)
     val c = 2 * Math.asin(Math.sqrt(a))
     R * c
+  }
+
+  def getLocalTime( utcString: String, localOffset: Int): LocalDateTime = {
+    val dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
+    val utcTime = LocalDateTime.parse( utcString, dateFormat )
+    utcTime.plusMinutes( localOffset )
   }
 
   def distance_between(lat_1: Float, lon_1: Float, lat_2: Float, lon_2: Float): Float ={

@@ -1,12 +1,8 @@
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.io._
 import java.util
-import java.util.Locale
 
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
-import org.apache.spark.storage.StorageLevel
 
 /**
   * Created by CVi on 14.03.2016.
@@ -54,11 +50,5 @@ object P1 {
 
 
     sc.stop()
-  }
-
-  def getLocalTime( utcString: String, localOffset: Int): LocalDateTime = {
-    val dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
-    val utcTime = LocalDateTime.parse( utcString, dateFormat )
-    utcTime.plusMinutes( localOffset )
   }
 }
