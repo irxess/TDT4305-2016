@@ -1,7 +1,7 @@
 /**
   * Created by CVi on 01.04.2016.
   */
-class AbrevCheckIn(ci: CheckIn) extends java.io.Serializable with Comparable[AbrevCheckIn] {
+class AbrevCheckIn(ci: CheckIn) extends java.io.Serializable with Ordered[AbrevCheckIn] {
   val time = ci.time
   val lat = ci.lat
   val lon = ci.lon
@@ -17,11 +17,13 @@ class AbrevCheckIn(ci: CheckIn) extends java.io.Serializable with Comparable[Abr
     R * c
   }
 
+  override def toString(): String = time + "\t" + lat + "\t" + lon + "\t" + sid
+
   def distance_between(lat_1: Double, lon_1: Double, lat_2: Double, lon_2: Double): Double ={
     haversine(lat_1, lon_1, lat_2, lon_2).toFloat
   }
 
-  override def compareTo(o: AbrevCheckIn): Int = {
+  override def compare(o: AbrevCheckIn): Int = {
     time.compareTo(o.time)
   }
 }

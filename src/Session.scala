@@ -4,19 +4,20 @@ import java.util.Collections
 /**
   * Created by CVi on 01.04.2016.
   */
-class Session(check_ins: util.ArrayList[AbrevCheckIn]) {
+class Session(check_ins: Array[AbrevCheckIn]) extends Serializable {
     val ci = check_ins
-    val ci_count = ci.size()
+    val ci_count = ci.length
     var length = 0.0
 
     def calculate_length(): Double ={
-      Collections.sort(ci)
-      for(i <- 1 until ci.size() ){
-        val a = ci.get(i)
-        val b = ci.get(i-1)
+      ci.sortBy(x => x)
+      for(i <- 1 until ci.length ){
+        val a = ci(i)
+        val b = ci(i-1)
         length = length + a.distance_between(a.lat, a.lon, b.lat, b.lon)
       }
-      print(length)
       length
     }
+
+    override def toString(): String = ci.mkString("\n")
 }
