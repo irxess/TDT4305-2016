@@ -1,0 +1,9 @@
+Using Spark's default log4j profile: org/apache/spark/log4j-defaults.properties
+256307      // users
+19265256    // checkin
+6338302     // sessions
+77          // countries
+414         // cities
+
+Process finished with exit code 0
+
