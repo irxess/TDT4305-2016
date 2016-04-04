@@ -11,7 +11,7 @@ class CheckIn(line: String, cities: Array[City]) extends java.io.Serializable {
   def uid = data(1).toInt
   def sid = data(2)
   def time = data(3)
-  def offset = data(4)
+  def offset = data(4).toInt
   def lat = data(5).toFloat
   def lon = data(6).toFloat
   def cat = data(7)

@@ -30,18 +30,14 @@ object P1 {
     ).reduceByKey((v1, v2) => {v1.addAll(v2); v1})
        .values.filter(al => al.size() >= 4)
 
-    val foursquareData = sc.textFile(file, 2).cache()
-      .map(line => line.split("\t"))
-    val dt =  foursquareData.filter(_(0) != header(0))
-      .map(line => (line(2), line)).cache()
+    val localTimes = data.map( checkin => getLocalTime( checkin.time, checkin.offset ))
+    println( localTimes.take(5).deep.mkString("\n"))
 
-    val localTimes = dt.map( entry => getLocalTime( entry._2(3), entry._2(4).toInt ))
-
-    println(data.map(ci => ci.uid).distinct.count())
-    println(data.count())
-    println(data.map(ci => ci.sid).distinct.count())
-    println(data.map(ci => ci.city.country).distinct.count())
-    println(data.map(ci => ci.city.name + ci.city.country_code).distinct.count())
+//    println(data.map(ci => ci.uid).distinct.count())
+//    println(data.count())
+//    println(data.map(ci => ci.sid).distinct.count())
+//    println(data.map(ci => ci.city.country).distinct.count())
+//    println(data.map(ci => ci.city.name + ci.city.country_code).distinct.count())
     //println(dataArray.first)
 
 
