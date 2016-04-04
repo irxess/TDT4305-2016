@@ -1,4 +1,7 @@
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util
+import java.util.Locale
 
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
@@ -8,8 +11,9 @@ import org.apache.spark.SparkContext
   */
 object P1 {
   def main(args: Array[String]) {
-    val file = "/Users/CVi/Downloads/Foursquare_data/dataset_TIST2015.tsv"
-    val cities_file = "/Users/CVi/Downloads/Foursquare_data/dataset_TIST2015_Cities.txt"
+    val file = "src/Foursquare_data/dataset_TIST2015.tsv"
+    val cities_file = "src/Foursquare_data/dataset_TIST2015_Cities.txt"
+
     val conf = new SparkConf().setAppName("Simple Application").setMaster("local[4]")
     val sc = new SparkContext(conf)
     val fsData = sc.textFile(file, 2)
@@ -26,6 +30,13 @@ object P1 {
     ).reduceByKey((v1, v2) => {v1.addAll(v2); v1})
        .values.filter(al => al.size() >= 4)
 
+    val foursquareData = sc.textFile(file, 2).cache()
+      .map(line => line.split("\t"))
+    val dt =  foursquareData.filter(_(0) != header(0))
+      .map(line => (line(2), line)).cache()
+
+    val localTimes = dt.map( entry => getLocalTime( entry._2(3), entry._2(4).toInt ))
+
     println(data.map(ci => ci.uid).distinct.count())
     println(data.count())
     println(data.map(ci => ci.sid).distinct.count())
@@ -35,5 +46,11 @@ object P1 {
 
 
     sc.stop()
+  }
+
+  def getLocalTime( utcString: String, localOffset: Int): LocalDateTime = {
+    val dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
+    val utcTime = LocalDateTime.parse( utcString, dateFormat )
+    utcTime.plusMinutes( localOffset )
   }
 }
