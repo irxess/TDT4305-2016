@@ -8,7 +8,7 @@ import org.apache.spark.rdd.RDD
   * Created by CVi on 29.03.2016.
   */
 @SerialVersionUID(100L)
-class CheckIn(line: String, cities: Array[City]) extends java.io.Serializable {
+class CheckIn(line: String) extends java.io.Serializable {
   private val data = line.split("\t")
   val id = data(0)
   val uid = data(1).toInt
@@ -18,12 +18,27 @@ class CheckIn(line: String, cities: Array[City]) extends java.io.Serializable {
   val lon = data(6).toDouble
   //def cat = data(7)
   //def subCat = data(8)
-  private val city = closestCity(cities, lon, lat)
-  val city_name = city.name
+//  private val city = closeCity
+  var city_name:String = _
   //def country = city.country
-  val country_code = city.country_code
+  var country_code:String = _
 
-  override def toString(): String = "(" + id + ", " + sid + ", " + city + ")"
+  def this(line: String, cities: Array[City]) = {
+    this(line)
+    val city = closestCity(cities,lon,lat)
+    this.city_name = city.name
+    //def country = city.country
+    this.country_code = city.country_code
+  }
+
+  def this(line: String, tree: KDTree) = {
+    this(line)
+    val c = tree.findNearestNode(this.lat, this.lon)
+    this.city_name = c.name
+    this.country_code = c.country_code
+  }
+
+  override def toString(): String = "(" + id + ", " + sid + ", " + city_name + ")"
 
   //Blatantly cooked from https://rosettacode.org/wiki/Haversine_formula#Scala
   def haversine(lat1:Double, lon1:Double, lat2:Double, lon2:Double)={
