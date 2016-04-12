@@ -1,4 +1,3 @@
-import java.io.{File, PrintWriter}
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -25,15 +24,19 @@ object P1b {
     def closestCity(lon: Double, lat: Double): City = {
       var current = emptyCity
       var distance = Double.PositiveInfinity
+      var squareRadius = 180.0
       for (i <- cities.indices) {
-        if (distance_between(cities(i).lat, cities(i).lon, lat, lon) < distance) {
-          distance = distance_between(cities(i).lat, cities(i).lon, lat, lon)
-          current = cities(i)
+        if (Math.abs(cities(i).lat - lat) < squareRadius && Math.abs(cities(i).lon - lon) < squareRadius) {
+          val dist = distance_between(cities(i).lat, cities(i).lon, lat, lon)
+          if (dist < distance) {
+            distance = dist
+            current = cities(i)
+            squareRadius = math.sqrt(Math.pow(cities(i).lat - lat, 2) + Math.pow(cities(i).lon - lon, 2))
+          }
         }
       }
       current
     }
-
     val dataSet = allOfIt
       //.sample(false, 0.1, 100)
       .filter(_ != header).map(line => {
@@ -49,14 +52,14 @@ object P1b {
 
     }).persist(StorageLevel.MEMORY_AND_DISK)
 
-    print("Users: ")
+    /*print("Users: ")
     println(dataSet.map(ci => ci._1).distinct.count())
     print("Total: ")
     println(dataSet.count())
     print("Sessions: ")
-    println(dataSet.map(ci => ci._2).distinct.count())
+    println(dataSet.map(ci => ci._2).distinct.count())*/
 
-    /*val citiesSet = dataSet.map(ci => {
+    val citiesSet = dataSet.map(ci => {
       val cit = closestCity(ci._4, ci._5)
       (cit.country_code, cit.name)
     }).distinct.cache()
@@ -65,35 +68,38 @@ object P1b {
     println(citiesSet.count())
     print("Countries: ")
     println(citiesSet.map(ci => ci._1).distinct.count())
-    citiesSet.unpersist()*/
+    citiesSet.unpersist()
     dataSet.unpersist()
+    /*
+        val sessions = dataSet.map(x => (x._2, Array[(Double, Double, LocalDateTime, String, String)]((x._4, x._5, x._3, x._6, x._2))))
+          .aggregateByKey(Array[(Double, Double, LocalDateTime, String, String)]())((k, v) => v ++ k, (v, k) => k ++ v)
+          //.reduceByKey((a,b) => a++b)
+          .values.cache()
 
-    val sessions = dataSet.map(x => (x._2, Array[(Double, Double, LocalDateTime, String, String)]((x._4, x._5, x._3, x._6, x._2))))
-      .aggregateByKey(Array[(Double, Double, LocalDateTime, String, String)]())((k, v) => v ++ k, (v, k) => k ++ v)
-      //.reduceByKey((a,b) => a++b)
-      .filter(sess => sess._2.length > 4).values
-    val sessions2 = sessions.map(ci => {
-      //I don't care about reverse order. A session is just as long backwards.
-      ci.sortWith((x, y) => x._3.compareTo(y._3) > 0)
-      var length = 0.0
-      for (i <- 1 until ci.length) {
-        val a = ci(i)
-        val b = ci(i - 1)
-        length = length + distance_between(a._1, a._2, b._1, b._2)
-      }
-      (length, ci)
-    })
+        sessions.map(x => (x.length, 1)).reduceByKey((n1, n2) => n1+n2).saveAsTextFile(out_file + "_histogram")
 
-    val sess_strings = sessions2.mapValues(x => x.map(y => {
-      y._1 + "\t" + y._2 + "\t" + y._3 + "\t" + y._4 + "\t" + y._5
-    }))
-      .filter(x => x._1 > 50.0)
-      .takeOrdered(100)(Ordering[Double].on(x => -x._1))
-      .map(x => x._2.mkString("\n")) //.mkString("\n")
+        val sessions2 = sessions.filter(sess => sess.length > 4).map(ci => {
+          //I don't care about reverse order. A session is just as long backwards, but the order needs to be correct.
+          ci.sortWith((x, y) => x._3.compareTo(y._3) > 0)
+          var length = 0.0
+          for (i <- 1 until ci.length) {
+            val a = ci(i)
+            val b = ci(i - 1)
+            length = length + distance_between(a._1, a._2, b._1, b._2)
+          }
+          (length, ci)
+        })
 
-    val writer = new PrintWriter(new File(out_file + "3.tsv"))
-    writer.write(sess_strings.mkString("\n"))
-    writer.close()
+        val sess_strings = sessions2.mapValues(x => x.map(y => {
+          y._1 + "\t" + y._2 + "\t" + y._3 + "\t" + y._4 + "\t" + y._5
+        }))
+          .filter(x => x._1 > 50.0)
+          .takeOrdered(100)(Ordering[Double].on(x => -x._1))
+          .map(x => x._2.mkString("\n")) //.mkString("\n")
+
+        val writer = new PrintWriter(new File(out_file + "3.tsv"))
+        writer.write(sess_strings.mkString("\n"))
+        writer.close()*/
 
     /*
   SELECT sessionid,
@@ -103,6 +109,7 @@ object P1b {
   */
 
     sc.stop()
+
   }
 
   def getLocalTime(utcString: String, localOffset: Int): LocalDateTime = {

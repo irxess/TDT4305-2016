@@ -5,5 +5,150 @@ Using Spark's default log4j profile: org/apache/spark/log4j-defaults.properties
 77          // countries
 414         // cities
 
-Process finished with exit code 0
+We have explored two ways of doing analysis on the Foursquare dataset
+One is the naive type conversion method with classes that does a lot of the work for us.
+The other makes use of destilled tuples.
 
+The former is easier to maintain and gives a better overview over what is represented in what way.
+The latter is more compact in memory and as a result are way faster.
+
+The examples use the compact tuple method
+
+1: Loading the dataset
+<code>
+var fsData = sc.textFile(file, 2)
+//Now we need to get rid of the header line
+val allOfIt = fsData
+val header = allOfIt.first
+fsData = fsData.filter(_ != header).map(x => x.split("\t"))
+</code>
+
+2: Calculate local time
+So obviously we need to convert it from a string to something where we can apply date math.
+<code>
+def getLocalTime(utcString: String, localOffset: Int): LocalDateTime = {
+    val dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
+    val utcTime = LocalDateTime.parse(utcString, dateFormat)
+    utcTime.plusMinutes(localOffset)
+}
+<code>
+
+3: Assign a country and city
+*Ilse*
+
+<code>
+val citiesSet = dataSet.map(ci => {
+      val cit = closestCity(ci._4, ci._5)
+      (cit.country_code, cit.name)
+    }).distinct.cache()
+</code>
+We skipped this step for most of the analysis
+because it is expensive in terms of computing power.
+The naive method uses it for all analysis.
+
+3b: Generate a base RDD with a minimal tuple
+<code>
+val dataSet = allOfIt.map(line => {
+      val data = line.split("\t")
+
+      (data(1).toInt, //uID _1
+        data(2), //sID _2
+        getLocalTime(data(3), data(4).toInt), //Time _3
+        data(5).toDouble, //lat _4
+        data(6).toDouble, //lon _5
+        data(7) //cat _6
+        )
+
+    }).persist(StorageLevel.MEMORY_AND_DISK)
+</code>
+
+4a:
+<code>
+print("Users: ")
+println(dataSet.map(ci => ci._1).distinct.count())
+</code>
+4b:
+<code>
+print("Total: ")
+println(dataSet.count())
+</code>
+4c:
+<code>
+print("Sessions: ")
+println(dataSet.map(ci => ci._2).distinct.count())
+</code>
+
+4d:
+<code>
+print("Cities: ")
+println(citiesSet.count())
+</code>
+4e:
+<code>
+print("Countries: ")
+println(citiesSet.map(ci => ci._1).distinct.count())
+citiesSet.unpersist()
+</code>
+
+pre5:
+Now we need to condense down the analysis, so we make key-value pairs and aggregate with those keys
+<code>
+val sessions = dataSet
+  .map(x => (x._2, Array[(Double, Double, LocalDateTime, String, String)]((x._4, x._5, x._3, x._6, x._2))))
+  .aggregateByKey(Array[(Double, Double, LocalDateTime, String, String)]())((k, v) => v ++ k, (v, k) => k ++ v)
+  .values.cache()
+</code>
+Because we are going to use this a couple of times (2) we need to remind spark of that.
+We threw away the session key, but store it for every instance in the list.
+
+5:
+The histogram gets calculated and output.
+This is simply by using the checkin-count as key and 1 as value, then reduce, and print the resulting values.
+<code>
+sessions.map(x => (x.length, 1)).reduceByKey((n1, n2) => n1+n2).saveAsTextFile(out_file + "_histogram")
+</code>
+
+6:
+Filter on number of checkins.
+Perform a length check for each session. (remember to sort it first, because A->B->C != A->C->B)
+Use length as key, we don't have a wrapping type, so tuple (length, checkins) will do.
+<code>
+val sessions2 = sessions
+  .filter(sess => sess.length > 4)
+  .map(ci => {
+      //I don't care about reverse order. A session is just as long backwards, but the order needs to be correct.
+      ci.sortWith((x, y) => x._3.compareTo(y._3) > 0)
+      var length = 0.0
+      for (i <- 1 until ci.length) {
+        val a = ci(i)
+        val b = ci(i - 1)
+        length = length + distance_between(a._1, a._2, b._1, b._2)
+      }
+      (length, ci)
+  }
+)
+</code>
+7a:
+First, filter on session length. We don't want to shuffle around all the values, just the ones with a distance > 50km.
+Serialize the session to a TSV string
+Second, get 100 sessions using takeOrdered (it sorts and gets the sessions)
+<code>
+val sess_strings = sessions2.mapValues(x => x.map(y => {
+  y._1 + "\t" + y._2 + "\t" + y._3 + "\t" + y._4 + "\t" + y._5
+}))
+  .filter(x => x._1 > 50.0)
+  .takeOrdered(100)(Ordering[Double].on(x => -x._1))
+</code>
+.map(x => x._2.mkString("\n")) //.mkString("\n")
+</code>
+At this point we have a regular array and manually output it to a file.
+
+
+Spark methods used:
+RDD.filter()
+RDD.map()
+RDD.persist()
+RDD.unpersist()
+RDD.cache()
+RDD.aggregateByKey()
+RDD.reduceByKey()

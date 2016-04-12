@@ -17,8 +17,8 @@ class CheckIn(line: String, cities: Array[City]) extends java.io.Serializable {
   //def country = city.country
   val country_code = city.country_code
   private val data = line.split("\t")
-  //def subCat = data(8)
   private val city = closestCity(cities, lon, lat)
+  //def subCat = data(8)
 
   def cat = data(7)
 
@@ -34,8 +34,9 @@ class CheckIn(line: String, cities: Array[City]) extends java.io.Serializable {
     var current = new City("N/A\t0.0\t0.0\tNA\tNA")
     var distance = Double.PositiveInfinity
     for (i <- cities.indices) {
-      if (distance_between(cities(i).lat, cities(i).lon, lat, lon) < distance) {
-        distance = distance_between(cities(i).lat, cities(i).lon, lat, lon)
+      val dist = distance_between(cities(i).lat, cities(i).lon, lat, lon)
+      if (dist < distance) {
+        distance = dist
         current = cities(i)
       }
     }
