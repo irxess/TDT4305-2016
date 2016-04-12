@@ -18,7 +18,11 @@ object P1 {
     val header = allOfIt.first
     val cities = sc.textFile(cities_file, 2).map(line => new City(line)).collect()
 
-    val data = allOfIt /*sample(false, 0.05, 100)*/ .filter(_ != header).map(line => new CheckIn(line, cities)).persist(StorageLevel.MEMORY_AND_DISK)
+    // Construct a tree
+    val tree = new KDTree(cities)
+    val data = allOfIt.sample(false, 0.15, 100).filter(_ != header).map(line => new CheckIn(line, tree)).persist(StorageLevel.MEMORY_AND_DISK)
+
+//    val data = allOfIt.sample(false, 0.15, 100).filter(_ != header).map(line => new CheckIn(line, cities)).persist(StorageLevel.MEMORY_AND_DISK)
     //cities = new Array[City](0)
 
     val dataArray = data.map(ci => (ci.sid, {
@@ -29,9 +33,9 @@ object P1 {
     ).reduceByKey((v1, v2) => {v1 ++ v2})
       .values.map(al => new Session(al)).persist(StorageLevel.MEMORY_AND_DISK)
 
-    println(data.map(ci => ci.uid).distinct.count())
-    println(data.count())
-    println(data.map(ci => ci.sid).distinct.count())
+//    println(data.map(ci => ci.uid).distinct.count())
+//    println(data.count())
+//    println(data.map(ci => ci.sid).distinct.count())
     println(data.map(ci => ci.country_code).distinct.count())
     println(data.map(ci => ci.city_name + ci.country_code).distinct.count())
     data.unpersist()
