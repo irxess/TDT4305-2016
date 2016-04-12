@@ -18,11 +18,11 @@ object P1b {
     val fsData = sc.textFile(file, 2)
     val allOfIt = fsData
     val header = allOfIt.first
-    val cities = sc.textFile(cities_file, 2).map(line => new City(line)).collect()
+    val cities = buildKDTree(sc.textFile(cities_file, 2).map(line => new City(line)).collect())
     val emptyCity = new City("N/A\t0.0\t0.0\tNA\tNA")
 
     def closestCity(lon: Double, lat: Double): City = {
-      var current = emptyCity
+      /*var current = emptyCity
       var distance = Double.PositiveInfinity
       var squareRadius = 180.0
       for (i <- cities.indices) {
@@ -35,7 +35,8 @@ object P1b {
           }
         }
       }
-      current
+      current*/
+      cities.findNearestNode(lon, lat)
     }
     val dataSet = allOfIt
       //.sample(false, 0.1, 100)
@@ -131,5 +132,41 @@ object P1b {
     val a = Math.pow(Math.sin(dLat / 2), 2) + Math.pow(Math.sin(dLon / 2), 2) * Math.cos(lat1.toRadians) * Math.cos(lat2.toRadians)
     val c = 2 * Math.asin(Math.sqrt(a))
     R * c
+  }
+
+  def buildKDTree(cities: Array[City]): KDTree = {
+    lonTree(cities)
+  }
+
+  def lonTree(cities: Array[City]): KDTree = {
+    if (cities.length == 1) {
+      new LonTree(cities(0), Option(null), Option(null))
+    } else if (cities.length == 2) {
+      cities.sortBy(x => -x.lon)
+      new LonTree(cities(0), Option(latTree(cities.slice(1, 2))), Option(null))
+    } else {
+      cities.sortBy(x => x.lon)
+      val mid = cities.length / 2
+      new LonTree(cities(mid),
+        Option(latTree(cities.slice(0, mid))),
+        Option(latTree(cities.slice(mid + 1, cities.length)))
+      )
+    }
+  }
+
+  def latTree(cities: Array[City]): KDTree = {
+    if (cities.length == 1) {
+      new LatTree(cities(0), Option(null), Option(null))
+    } else if (cities.length == 2) {
+      cities.sortBy(x => -x.lat)
+      new LatTree(cities(0), Option(lonTree(cities.slice(1, 2))), Option(null))
+    } else {
+      cities.sortBy(x => x.lat)
+      val mid = cities.length / 2
+      new LatTree(cities(mid),
+        Option(lonTree(cities.slice(0, mid))),
+        Option(lonTree(cities.slice(mid + 1, cities.length)))
+      )
+    }
   }
 }

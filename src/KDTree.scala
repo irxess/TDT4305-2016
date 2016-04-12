@@ -15,7 +15,7 @@ abstract class KDTree(c: City, left: Option[KDTree], right: Option[KDTree]) exte
         haversine( lat, lon, n.lat, n.lon)
     }
 
-    abstract def shortestDistance(n: SearchNode): Double
+    def shortestDistance(n: SearchNode): Double
 
     def haversine(lat1:Double, lon1:Double, lat2:Double, lon2:Double)={
         val R = 6372.8
@@ -27,16 +27,19 @@ abstract class KDTree(c: City, left: Option[KDTree], right: Option[KDTree]) exte
         R * c
     }
 
-    abstract def pointIsToTheLeft(point: SearchNode): Boolean
+    def pointIsToTheLeft(point: SearchNode): Boolean
 
     def nearestNeighbor(point: SearchNode): Unit = {
         // if tree is empty, return Double.max
 
         val newDistance = distance(point)
-        if (newDistance < point.distance) point.distance = newDistance
+        if (newDistance < point.distance) {
+            point.distance = newDistance
+            point.c = city
+        }
 
-        var mostPromisingTree: Option[KDTree] = _
-        var lessPromisingTree: Option[KDTree] = _
+        var mostPromisingTree: Option[KDTree] = null
+        var lessPromisingTree: Option[KDTree] = null
         if (pointIsToTheLeft(point)) {
             mostPromisingTree = leftChild
             lessPromisingTree = rightChild
@@ -55,6 +58,12 @@ abstract class KDTree(c: City, left: Option[KDTree], right: Option[KDTree]) exte
                 lessPromisingTree.get.nearestNeighbor(point)
             }
         }
+    }
+
+    def findNearestNode(lon: Double, lat: Double): City = {
+        val node = new SearchNode(lat, lon)
+        nearestNeighbor(node)
+        node.c
     }
 
 }
@@ -81,6 +90,7 @@ class SearchNode(a: Double, o: Double) {
     val lat = a
     val lon = o
     var distance = Double.MaxValue
+    var c: City = null
 }
 
 

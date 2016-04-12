@@ -1,7 +1,7 @@
 import java.io._
 
-import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.storage.StorageLevel
+import org.apache.spark.{SparkConf, SparkContext}
 
 /**
   * Created by CVi on 14.03.2016.
@@ -19,8 +19,9 @@ object P1 {
     val cities = sc.textFile(cities_file, 2).map(line => new City(line)).collect()
 
     // Construct a tree
-    val tree = new KDTree(cities)
+    val tree = buildKDTree(cities)
     val data = allOfIt.sample(false, 0.15, 100).filter(_ != header).map(line => new CheckIn(line, tree)).persist(StorageLevel.MEMORY_AND_DISK)
+
 
 //    val data = allOfIt.sample(false, 0.15, 100).filter(_ != header).map(line => new CheckIn(line, cities)).persist(StorageLevel.MEMORY_AND_DISK)
     //cities = new Array[City](0)
@@ -62,4 +63,40 @@ object P1 {
 
     sc.stop()
   }
+
+  def buildKDTree(cities: Array[City]): KDTree = {
+    lonTree(cities)
+  }
+
+  def lonTree(cities: Array[City]): KDTree = {
+    if (cities.length == 1) {
+      return new LonTree(cities(0), Option(null), Option(null))
+    }
+    cities.sortBy(x => x.lon)
+    if (cities.length == 2) {
+      return new LonTree(cities(0), Option(latTree(cities.slice(1, 1))), Option(null))
+    }
+    val mid = cities.length / 2
+    new LonTree(cities(mid),
+      Option(latTree(cities.slice(0, mid - 1))),
+      Option(latTree(cities.slice(mid + 1, cities.length)))
+    )
+  }
+
+  def latTree(cities: Array[City]): KDTree = {
+    if (cities.length == 1) {
+      return new LatTree(cities(0), Option(null), Option(null))
+    }
+    cities.sortBy(x => x.lon)
+    if (cities.length == 2) {
+      return new LatTree(cities(0), Option(lonTree(cities.slice(1, 1))), Option(null))
+    }
+    val mid = cities.length / 2
+    new LatTree(cities(mid),
+      Option(lonTree(cities.slice(0, mid - 1))),
+      Option(lonTree(cities.slice(mid + 1, cities.length)))
+    )
+  }
+
 }
+
