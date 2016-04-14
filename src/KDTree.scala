@@ -17,6 +17,8 @@ abstract class KDTree(c: City, left: Option[KDTree], right: Option[KDTree]) exte
 
     def shortestDistance(n: SearchNode): Double
 
+    def checkTree: Unit
+
     def haversine(lat1:Double, lon1:Double, lat2:Double, lon2:Double)={
         val R = 6372.8
         val dLat=(lat2 - lat1).toRadians
@@ -75,6 +77,22 @@ class LatTree(c: City, left: Option[KDTree], right: Option[KDTree]) extends KDTr
     override def shortestDistance(point: SearchNode): Double = {
         haversine( lat, point.lon, point.lat, point.lon )
     }
+
+    override def checkTree: Unit = {
+        if (rightChild.isDefined) {
+            if (rightChild.get.lat < lat) {
+                println("Error Right LAT")
+            }
+            rightChild.get.checkTree
+        }
+        if (leftChild.isDefined) {
+            if (leftChild.get.lat >= lat) {
+                println("Error Left LAT")
+            }
+            leftChild.get.checkTree
+
+        }
+    }
 }
 
 class LonTree(c: City, left: Option[KDTree], right: Option[KDTree]) extends KDTree(c, left, right) {
@@ -82,6 +100,21 @@ class LonTree(c: City, left: Option[KDTree], right: Option[KDTree]) extends KDTr
 
     override def shortestDistance(point: SearchNode): Double = {
         haversine( point.lat, lon, point.lat, point.lon)
+    }
+
+    override def checkTree: Unit = {
+        if (rightChild.isDefined) {
+            if (rightChild.get.lon < lon) {
+                println("Error Right LON")
+            }
+            rightChild.get.checkTree
+        }
+        if (leftChild.isDefined) {
+            if (leftChild.get.lon >= lon) {
+                println("Error Left LON")
+            }
+            leftChild.get.checkTree
+        }
     }
 }
 

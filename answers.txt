@@ -146,9 +146,30 @@ At this point we have a regular array and manually output it to a file.
 
 Spark methods used:
 RDD.filter()
+Filter takes a function as an argument (lambda), this function returns true if the record is to remain in the RDD
+otherwise it is removed form the RDD.
+
+
 RDD.map()
+For each record in the RDD apply the passed function to it, the output is the new record.
+
 RDD.persist()
+Keep this RDD, because it may come in handy later on.
+
 RDD.unpersist()
+There is little chance of this RDD becoming handy after this point, so throw it away.
+
 RDD.cache()
-RDD.aggregateByKey()
+Same as persist, but does not bother with saving to disk.
+
 RDD.reduceByKey()
+When applied to a key-value-pair RDD this function will join the functions with the same key together using the passed
+function.
+
+RDD.aggregateByKey()
+Works as reduceByKey, but takes: an initial value, a partition-reducer and a cross-partition-reducer.
+The partition-reducer is a function that reduces records internal to a partition, thus reducing the number of records
+that need to be shuffled later on.
+The cross-partition-reducer reduces the records after the partition-shuffle.
+
+aggregateByKey have an advantage if the data can be significantly reduced internally to a partition.

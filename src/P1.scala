@@ -70,32 +70,34 @@ object P1 {
 
   def lonTree(cities: Array[City]): KDTree = {
     if (cities.length == 1) {
-      return new LonTree(cities(0), Option(null), Option(null))
+      new LonTree(cities(0), Option(null), Option(null))
+    } else if (cities.length == 2) {
+      cities.sortBy(x => -x.lon)
+      new LonTree(cities(0), Option(latTree(cities.slice(1, 2))), Option(null))
+    } else {
+      cities.sortBy(x => x.lon)
+      val mid = cities.length / 2
+      new LonTree(cities(mid),
+        Option(latTree(cities.slice(0, mid))),
+        Option(latTree(cities.slice(mid + 1, cities.length)))
+      )
     }
-    cities.sortBy(x => x.lon)
-    if (cities.length == 2) {
-      return new LonTree(cities(0), Option(latTree(cities.slice(1, 1))), Option(null))
-    }
-    val mid = cities.length / 2
-    new LonTree(cities(mid),
-      Option(latTree(cities.slice(0, mid - 1))),
-      Option(latTree(cities.slice(mid + 1, cities.length)))
-    )
   }
 
   def latTree(cities: Array[City]): KDTree = {
     if (cities.length == 1) {
-      return new LatTree(cities(0), Option(null), Option(null))
+      new LatTree(cities(0), Option(null), Option(null))
+    } else if (cities.length == 2) {
+      cities.sortBy(x => -x.lat)
+      new LatTree(cities(0), Option(lonTree(cities.slice(1, 2))), Option(null))
+    } else {
+      cities.sortBy(x => x.lat)
+      val mid = cities.length / 2
+      new LatTree(cities(mid),
+        Option(lonTree(cities.slice(0, mid))),
+        Option(lonTree(cities.slice(mid + 1, cities.length)))
+      )
     }
-    cities.sortBy(x => x.lon)
-    if (cities.length == 2) {
-      return new LatTree(cities(0), Option(lonTree(cities.slice(1, 1))), Option(null))
-    }
-    val mid = cities.length / 2
-    new LatTree(cities(mid),
-      Option(lonTree(cities.slice(0, mid - 1))),
-      Option(lonTree(cities.slice(mid + 1, cities.length)))
-    )
   }
 
 }
