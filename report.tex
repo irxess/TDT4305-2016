@@ -224,6 +224,10 @@ This is simply by using the checkin-count as key and 1 as value, then reduce, an
 sessions.map(x => (x.length, 1)).reduceByKey((n1, n2) => n1+n2).saveAsTextFile(out_file + "_histogram")
 \end{lstlisting}
 
+\begin{center}
+\includegraphics[width=0.8\textwidth]{log-hist.png}\\
+\includegraphics[width=0.8\textwidth]{log_log_hist.png}
+\end{center}
 % TODO: Picture of histogram here
 
 
@@ -264,8 +268,9 @@ At this point we have a regular array and manually output it to a file.
 
 
 \subsection{Visualize the longest sessions in CartoDB}
-% TODO: Screenshot here
-
+\begin{center}
+\includegraphics[width=0.8\textwidth]{carto.png}
+\end{center}
 
 \section{Spark methods used}
 
