@@ -22,10 +22,6 @@ object P1 {
     val tree = buildKDTree(cities)
     val data = allOfIt.sample(false, 0.15, 100).filter(_ != header).map(line => new CheckIn(line, tree)).persist(StorageLevel.MEMORY_AND_DISK)
 
-
-//    val data = allOfIt.sample(false, 0.15, 100).filter(_ != header).map(line => new CheckIn(line, cities)).persist(StorageLevel.MEMORY_AND_DISK)
-    //cities = new Array[City](0)
-
     val dataArray = data.map(ci => (ci.sid, {
       val al = Array(new AbrevCheckIn(ci))
       al
@@ -34,17 +30,15 @@ object P1 {
     ).reduceByKey((v1, v2) => {v1 ++ v2})
       .values.map(al => new Session(al)).persist(StorageLevel.MEMORY_AND_DISK)
 
-//    println(data.map(ci => ci.uid).distinct.count())
-//    println(data.count())
-//    println(data.map(ci => ci.sid).distinct.count())
     println(data.map(ci => ci.country_code).distinct.count())
     println(data.map(ci => ci.city_name + ci.country_code).distinct.count())
     data.unpersist()
-    /*SELECT
-	sess,
-	ST_MakeLine(ARRAY(SELECT the_geom FROM out3 WHERE o3.sess = out3.sess ORDER BY DATE ASC)) AS the_geom_webmercator
-  FROM out3 AS o3 GROUP BY sess
-  */
+    /*
+    SELECT
+    sess,
+    ST_MakeLine(ARRAY(SELECT the_geom FROM out3 WHERE o3.sess = out3.sess ORDER BY DATE ASC)) AS the_geom_webmercator
+    FROM out3 AS o3 GROUP BY sess
+    */
 
     dataArray.map(sess => (sess.ci_count, 1)).reduceByKey((v1, v2) => v1 + v2).saveAsTextFile(out_file)
     val fourPlus = dataArray.filter(sess => sess.ci_count >= 4).filter(s => {
@@ -57,10 +51,6 @@ object P1 {
     writer.write(fourPlus.mkString("\n"))
     writer.close()
 
-
-    //println(dataArray.first)
-
-
     sc.stop()
   }
 
@@ -72,14 +62,14 @@ object P1 {
     if (cities.length == 1) {
       new LonTree(cities(0), Option(null), Option(null))
     } else if (cities.length == 2) {
-      cities.sortBy(x => -x.lon)
-      new LonTree(cities(0), Option(latTree(cities.slice(1, 2))), Option(null))
+      val c = cities.sortBy(x => -x.lon)
+      new LonTree(c(0), Option(latTree(c.slice(1, 2))), Option(null))
     } else {
-      cities.sortBy(x => x.lon)
-      val mid = cities.length / 2
-      new LonTree(cities(mid),
-        Option(latTree(cities.slice(0, mid))),
-        Option(latTree(cities.slice(mid + 1, cities.length)))
+      val c = cities.sortBy(x => x.lon)
+      val mid = c.length / 2
+      new LonTree(c(mid),
+        Option(latTree(c.slice(0, mid))),
+        Option(latTree(c.slice(mid + 1, c.length)))
       )
     }
   }
@@ -88,17 +78,16 @@ object P1 {
     if (cities.length == 1) {
       new LatTree(cities(0), Option(null), Option(null))
     } else if (cities.length == 2) {
-      cities.sortBy(x => -x.lat)
-      new LatTree(cities(0), Option(lonTree(cities.slice(1, 2))), Option(null))
+      val c = cities.sortBy(x => -x.lat)
+      new LatTree(c(0), Option(lonTree(c.slice(1, 2))), Option(null))
     } else {
-      cities.sortBy(x => x.lat)
+      val c = cities.sortBy(x => x.lat)
       val mid = cities.length / 2
-      new LatTree(cities(mid),
-        Option(lonTree(cities.slice(0, mid))),
-        Option(lonTree(cities.slice(mid + 1, cities.length)))
+      new LatTree(c(mid),
+        Option(lonTree(c.slice(0, mid))),
+        Option(lonTree(c.slice(mid + 1, c.length)))
       )
     }
   }
-
 }
 
