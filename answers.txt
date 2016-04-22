@@ -138,7 +138,6 @@ val sess_strings = sessions2.mapValues(x => x.map(y => {
 }))
   .filter(x => x._1 > 50.0)
   .takeOrdered(100)(Ordering[Double].on(x => -x._1))
-</code>
 .map(x => x._2.mkString("\n")) //.mkString("\n")
 </code>
 At this point we have a regular array and manually output it to a file.
@@ -166,7 +165,7 @@ RDD.reduceByKey()
 When applied to a key-value-pair RDD this function will join the functions with the same key together using the passed
 function.
 
-RDD.aggregateByKey()
+RDD.aggregateByKey()()
 Works as reduceByKey, but takes: an initial value, a partition-reducer and a cross-partition-reducer.
 The partition-reducer is a function that reduces records internal to a partition, thus reducing the number of records
 that need to be shuffled later on.

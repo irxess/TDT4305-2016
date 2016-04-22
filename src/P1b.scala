@@ -42,7 +42,7 @@ object P1b {
     val dataSet = allOfIt
       //Get rid of header
       .filter(_ != header)
-      //Then extract.
+      //Then extract
       .map(line => {
       val data = line.split("\t")
 
@@ -59,12 +59,12 @@ object P1b {
 
     //Get the number of users (distinct user IDs)
     val usercount = dataSet.map(ci => ci._1).distinct.count()
-    //Get the number of checkins
+    //Get the number of check-ins
     val totalCi = dataSet.count()
     //Get the number of sessions (distinct session IDs)
     val sessionCount = dataSet.map(ci => ci._2).distinct.count()
 
-    //Map all checkins to a city and store only city and country.
+    //Map all check-ins to a city and store only city and country.
     // For memory and speed, make them distinct.
     // Cache this, because we are going to use it several times.
     val citiesSet = dataSet.map(ci => {
