@@ -1,4 +1,3 @@
-import java.io.{File, PrintWriter}
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -14,10 +13,10 @@ object P1b {
     /**
       *
       */
-    val file = System.getenv("DS_FILE")
-    val cities_file = System.getenv("DS_FILE_CITIES")
-    val out_file = System.getenv("OUT_FILE")
-    val conf = new SparkConf().setAppName("Simple Application").setMaster("local[4]")
+    val file = args(0)
+    val cities_file = args(1)
+    val out_file = args(2)
+    val conf = new SparkConf().setAppName("Simple Application")
     val sc = new SparkContext(conf)
     //Build a KDTree, load the file using spark load and just collect it.
     // Note that it uses a self-building class as datatype.
@@ -116,10 +115,12 @@ object P1b {
     //De don't need the dataset anymore, so clear it for removal.
     dataSet.unpersist()
 
+
+
     //Helper to write this to a file.
-    val writer = new PrintWriter(new File(out_file + "3.tsv"))
+    /*val writer = new PrintWriter(new File(out_file + "3.tsv"))
     writer.write(sess_strings.mkString("\n"))
-    writer.close()
+    writer.close()*/
 
     /*
     SELECT sessionid,
@@ -141,6 +142,8 @@ object P1b {
     println(cityCount)
     print("Countries: ")
     println(countryCount)
+
+    println("Skipped writing sessions file, because it can't run on the cluster like that.")
 
 
 

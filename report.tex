@@ -127,6 +127,7 @@
 
 
 \section{Exploratory Analysis of Foursquare Dataset}
+Several steps were required in order to make 
 
 \subsection{Loading the dataset}
 \begin{lstlisting}
@@ -224,6 +225,10 @@ This is simply by using the checkin-count as key and 1 as value, then reduce, an
 sessions.map(x => (x.length, 1)).reduceByKey((n1, n2) => n1+n2).saveAsTextFile(out_file + "_histogram")
 \end{lstlisting}
 
+\begin{center}
+\includegraphics[width=0.8\textwidth]{log-hist.png}\\
+\includegraphics[width=0.8\textwidth]{log_log_hist.png}
+\end{center}
 % TODO: Picture of histogram here
 
 
@@ -264,8 +269,21 @@ At this point we have a regular array and manually output it to a file.
 
 
 \subsection{Visualize the longest sessions in CartoDB}
-% TODO: Screenshot here
+Published at:
+\url{https://cvi.cartodb.com/viz/93da5988-fd7f-11e5-8456-0ea31932ec1d/public_map}
+\begin{center}
+\includegraphics[width=0.8\textwidth]{carto.png}
+\end{center}
 
+Query used to extract paths (assuming tabe is named out3):
+\begin{lstlisting}[language=SQL]
+SELECT
+    sess,
+    ST_MakeLine(
+        ARRAY(SELECT the_geom FROM out3 WHERE o3.sess = out3.sess ORDER BY DATE ASC)
+    ) AS the_geom_webmercator
+FROM out3 AS o3 GROUP BY sess
+\end{lstlisting}
 
 \section{Spark methods used}
 
@@ -314,6 +332,12 @@ cross-partition-reducer. The partition-reducer is a function that reduces
 records internal to a partition, thus reducing the number of records that need 
 to be shuffled later on. The cross-partition-reducer reduces the records after 
 the partition-shuffle.
+\\ \hline
+
+\hline
+\cellcolor[gray]{0.9}
+RDD.distinct() \\ \hline
+Removes duplicates from the dataset.
 \\ \hline
 \end{tabularx}
 
