@@ -26,7 +26,7 @@
 \usepackage{tabularx}
 \usepackage{multirow}
 
- 
+
 % "define" Scala
 \lstdefinelanguage{scala}{
   morekeywords={abstract,case,catch,class,def,%
@@ -48,7 +48,7 @@
 \definecolor{dkgreen}{rgb}{0,0.6,0}
 \definecolor{gray}{rgb}{0.5,0.5,0.5}
 \definecolor{mauve}{rgb}{0.58,0,0.82}
- 
+
 % Default settings for code listings
 \lstset{frame=tb,
   language=scala,
@@ -94,10 +94,10 @@
 
 
 \begin{titlepage}
-%\includegraphics[height=1.5cm]{images/ntnu_logo.pdf}\\[1cm]   
+%\includegraphics[height=1.5cm]{images/ntnu_logo.pdf}\\[1cm]
 \begin{center}
 
- 
+
 % Upper part of the page
 ~\\[1.5cm]
 
@@ -127,7 +127,6 @@
 
 
 \section{Exploratory Analysis of Foursquare Dataset}
-Several steps were required in order to make 
 
 \subsection{Loading the dataset}
 \begin{lstlisting}
@@ -139,7 +138,8 @@ fsData = fsData.filter(_ != header).map(x => x.split("\t"))
 \end{lstlisting}
 
 \subsection{Calculate the local time}
-So obviously we need to convert it from a string to something where we can apply date math.
+We needed to convert the time from a string to something where we can apply date math.
+In this case, we used some Java functions.
 \begin{lstlisting}
 def getLocalTime(utcString: String, localOffset: Int): LocalDateTime = {
     val dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
@@ -149,12 +149,63 @@ def getLocalTime(utcString: String, localOffset: Int): LocalDateTime = {
 \end{lstlisting}
 
 \subsection{Assign a country and city}
+We created a City class, where we stored its position, name and country.
+When matching all check-ins against all cities, we found this method to be too
+slow. So we decided to use KD trees. After implementing these, our code looked
+like this:
 \begin{lstlisting}
 val cities = buildKDTree(sc.textFile(cities_file, 2).map(line => new City(line)).collect())
 
 def closestCity(lon: Double, lat: Double): City = {
     cities.findNearestNode(lon, lat)
 }
+\end{lstlisting}
+
+\subsubsection{KD Tree}
+Our KD tree alternates between latitude and longitude when sorting
+children to the left or right. We used the ranges these coordinate numbers
+already had. This is not entirely accurate for longitude, since the earth is
+round. The "split" between -180 and 180 degrees occurs mostly in the pacific
+ocean, so as long as the nearest city to a coordinate is on the same continent,
+we can make this assumption.
+
+The KD tree containing all known cities is only built once, and then distributed
+across the cluster. To make sure that the tree is balanced we sorted the data
+at every depth of the tree, alternating between latitude and longitude sorting.
+ The median is inserted, and the rest split into
+a left and a right child.
+
+After the KD tree is built, the nearest neighbor algorithm for KD trees is used
+to find the nearest city for every check-in.
+\begin{lstlisting}
+def nearestNeighbor(point: SearchNode): Unit = {
+
+    val newDistance = distance(point)
+    if (newDistance < point.distance) {
+        point.distance = newDistance
+        point.c = city
+    }
+
+    var mostPromisingTree: Option[KDTree] = null
+    var lessPromisingTree: Option[KDTree] = null
+    if (pointIsToTheLeft(point)) {
+        mostPromisingTree = leftChild
+        lessPromisingTree = rightChild
+    } else {
+        mostPromisingTree = rightChild
+        lessPromisingTree = leftChild
+    }
+
+    if (mostPromisingTree.isDefined) {
+        mostPromisingTree.get.nearestNeighbor(point)
+    }
+
+    if (lessPromisingTree.isDefined) {
+        val minDistanceToUnknownArea = shortestDistance(point)
+        if (minDistanceToUnknownArea < point.distance) {
+            lessPromisingTree.get.nearestNeighbor(point)
+        }
+    }
 \end{lstlisting}
 
 \subsection{Generate a base RDD with a minimal tuple}
@@ -188,7 +239,7 @@ println(dataSet.count()) // 19265256
 
 \subsubsection{Number of check-in sessions}
 \begin{lstlisting}
-print("Sessions: ") 
+print("Sessions: ")
 println(dataSet.map(ci => ci._2).distinct.count()) // 6338302
 \end{lstlisting}
 
@@ -214,7 +265,7 @@ val sessions = dataSet
   .aggregateByKey(Array[(Double, Double, LocalDateTime, String, String)]())((k, v) => v ++ k, (v, k) => k ++ v)
   .values.cache()
 \end{lstlisting}
-Because we are going to use this a couple of times (2) we need to remind spark of that.
+Because we are going to use this a couple of times (2) we need to remind Spark of that.
 We threw away the session key, but store it for every instance in the list.
 
 
@@ -275,7 +326,7 @@ Published at:
 \includegraphics[width=0.8\textwidth]{carto.png}
 \end{center}
 
-Query used to extract paths (assuming tabe is named out3):
+Query used to extract paths (assuming the table is named out3):
 \begin{lstlisting}[language=SQL]
 SELECT
     sess,
@@ -292,13 +343,13 @@ FROM out3 AS o3 GROUP BY sess
 \hline
 \cellcolor[gray]{0.9}
 RDD.filter() \\ \hline
-Filter takes a function as an argument (lambda), this function returns true 
-if the record is to remain in the RDD otherwise it is removed form the RDD. 
+Filter takes a function as an argument (lambda), this function returns true
+if the record is to remain in the RDD otherwise it is removed form the RDD.
 \\ \hline
 \hline
 \cellcolor[gray]{0.9}
 RDD.map() \\ \hline
-For each record in the RDD apply the passed function to it, the output is the 
+For each record in the RDD apply the passed function to it, the output is the
  new record.
 \\ \hline
 \hline
@@ -309,7 +360,7 @@ Keep this RDD, because it may come in handy later on.
 \hline
 \cellcolor[gray]{0.9}
 RDD.unpersist() \\ \hline
-There is little chance of this RDD becoming handy after this point, so throw it 
+There is little chance of this RDD becoming handy after this point, so throw it
 away.
 \\ \hline
 \hline
@@ -320,20 +371,19 @@ Same as persist, but does not bother with saving to disk.
 \hline
 \cellcolor[gray]{0.9}
 RDD.reduceByKey() \\ \hline
-When applied to a key-value-pair RDD this function will join the functions with 
+When applied to a key-value-pair RDD this function will join the functions with
 the same key together using the passed
 function.
 \\ \hline
 \hline
 \cellcolor[gray]{0.9}
 RDD.aggregateByKey()() \\ \hline
-Works as reduceByKey, but takes: an initial value, a partition-reducer and a 
-cross-partition-reducer. The partition-reducer is a function that reduces 
-records internal to a partition, thus reducing the number of records that need 
-to be shuffled later on. The cross-partition-reducer reduces the records after 
+Works as reduceByKey, but takes: an initial value, a partition-reducer and a
+cross-partition-reducer. The partition-reducer is a function that reduces
+records internal to a partition, thus reducing the number of records that need
+to be shuffled later on. The cross-partition-reducer reduces the records after
 the partition-shuffle.
 \\ \hline
-
 \hline
 \cellcolor[gray]{0.9}
 RDD.distinct() \\ \hline
